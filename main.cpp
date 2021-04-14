@@ -3,6 +3,7 @@
 #include <QSystemTrayIcon>
 #include <QMenu>
 #include <iostream>
+#include "inputhook.h"
 
 int main(int argc, char *argv[]){
     Q_INIT_RESOURCE(resources);
@@ -15,10 +16,12 @@ int main(int argc, char *argv[]){
     //Window window;
     //window.show();
 
+    InputHook::Initialize();
+
     QMenu trayMenu;
-    trayMenu.addAction("test", [](bool test){
-        std::cout << test << std::endl;
-    })->setCheckable(true);
+    auto* inputOption = trayMenu.addAction("Input Enabled", &InputHook::SetInputState);
+    inputOption->setCheckable(true);
+    inputOption->setChecked(InputHook::GetInputState());
     trayMenu.addAction("Quit", QApplication::instance(), &QApplication::quit);
 
     QSystemTrayIcon trayIcon;
@@ -28,6 +31,6 @@ int main(int argc, char *argv[]){
     trayIcon.show();
 
     auto r =  QApplication::exec();
-    printf("test\n");
+    InputHook::Destroy();
     return r;
 }

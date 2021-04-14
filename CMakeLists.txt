@@ -14,5 +14,5 @@ include_directories(".")
 
 add_subdirectory(libs)
 
-add_executable(InputShare main.cpp resources.qrc)
+add_executable(InputShare main.cpp inputhook.cpp resources.qrc)
 target_link_libraries(InputShare btstack-lib Qt5::Widgets Qt5::Core)
