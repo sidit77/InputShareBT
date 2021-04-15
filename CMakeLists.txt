@@ -18,5 +18,5 @@ add_executable(InputShare
         inputhook.cpp
         resources.qrc
         bluetooth.cpp
-        )
+        hid.cpp)
 target_link_libraries(InputShare btstack-lib Qt5::Widgets Qt5::Core)

@@ -15,6 +15,7 @@
 #include "classic/btstack_link_key_db_tlv.h"
 #include "hci.h"
 #include "hci_dump.h"
+#include "hid.h"
 
 // to enable demo text on POSIX systems
 // #undef HAVE_BTSTACK_STDIN
@@ -182,7 +183,7 @@ static void send_report(int modifier, int keycode){
     hid_device_send_interrupt_message(hid_cid, &report[0], sizeof(report));
 }
 
-void bt_send_char(char character) {
+void bt_send_char(uint8_t mod,  uint8_t key) {
     uint8_t modifier;
     uint8_t keycode;
     int found;
@@ -195,8 +196,10 @@ void bt_send_char(char character) {
 
         case APP_CONNECTED:
             // send keyu
-            found = keycode_and_modifer_us_for_character(character, &keycode, &modifier);
-            if (found){
+            //found = keycode_and_modifer_us_for_character(character, &keycode, &modifier);
+            keycode = key;
+            modifier = mod;
+            if (keycode != 0){
                 send_key(modifier, keycode);
                 return;
             }

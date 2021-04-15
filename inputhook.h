@@ -6,8 +6,9 @@
 
 struct KeyEventArgs {
     VirtualKey key;
+    uint16_t scanCode;
     KeyState pressed;
-    KeyEventArgs(VirtualKey key, KeyState pressed) : key(key), pressed(pressed) {}
+    KeyEventArgs(VirtualKey key, uint16_t scanCode, KeyState pressed) : key(key), scanCode(scanCode), pressed(pressed) {}
 };
 
 typedef std::function<bool(KeyEventArgs)> KeyCallback;

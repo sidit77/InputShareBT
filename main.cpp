@@ -5,6 +5,16 @@
 #include <iostream>
 #include "inputhook.h"
 #include "bluetooth.h"
+#include "hid.h"
+
+#define KEY_MOD_LCTRL  0x01
+#define KEY_MOD_LSHIFT 0x02
+#define KEY_MOD_LALT   0x04
+#define KEY_MOD_LMETA  0x08
+#define KEY_MOD_RCTRL  0x10
+#define KEY_MOD_RSHIFT 0x20
+#define KEY_MOD_RALT   0x40
+#define KEY_MOD_RMETA  0x80
 
 int main(int argc, char *argv[]){
     Q_INIT_RESOURCE(resources);
@@ -16,8 +26,6 @@ int main(int argc, char *argv[]){
 
     //Window window;
     //window.show();
-
-    //bt_init();
 
     QMenu trayMenu;
     auto* inputOption = trayMenu.addAction("Input Enabled");
@@ -31,18 +39,27 @@ int main(int argc, char *argv[]){
     trayIcon.setContextMenu(&trayMenu);
     trayIcon.show();
 
-    InputHook::Initialize([&](auto args){
-        if(args.key == VirtualKey::KeyF && args.pressed == KeyState::Pressed)
-            std::cout << "F Pressed" << std::endl;
+    bt_init();
 
-        return inputOption->isChecked();
+    InputHook::Initialize([&](auto args){
+        if(!inputOption->isChecked()){
+            if(args.pressed == KeyState::Pressed){
+                uint8_t mods = 0;
+                if(GetKeyState((uint32_t)VirtualKey::LShift) & 0x8000)
+                    mods |= KEY_MOD_LSHIFT;
+                if(GetKeyState((uint32_t)VirtualKey::LControl) & 0x8000)
+                    mods |= KEY_MOD_LCTRL;
+                bt_send_char(mods, keycode_windows_to_hid(args.scanCode));
+            }
+
+            return false;
+        }
+        return true;
     });
 
 
 
-
-
     auto r =  QApplication::exec();
-    //bt_destroy();
+    bt_destroy();
     return r;
 }

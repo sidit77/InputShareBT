@@ -40,7 +40,7 @@ namespace {
     LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam){
         if(nCode >= 0) {
             auto *keyStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
-            if(!keyCallback(KeyEventArgs(static_cast<VirtualKey>(keyStruct->vkCode),  isPressed(wParam))))
+            if(!keyCallback(KeyEventArgs(static_cast<VirtualKey>(keyStruct->vkCode), static_cast<uint16_t>(keyStruct->scanCode), isPressed(wParam))))
                 return 1;
         }
         return CallNextHookEx(instance->keyboard, nCode, wParam, lParam);
