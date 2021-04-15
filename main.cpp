@@ -17,19 +17,12 @@ int main(int argc, char *argv[]){
     //Window window;
     //window.show();
 
-    bt_init();
-
-    InputHook::Initialize([](char c){
-        std::cout << c << std::endl;
-        bt_send_char(c);
-    });
-
-
+    //bt_init();
 
     QMenu trayMenu;
-    auto* inputOption = trayMenu.addAction("Input Enabled", &InputHook::SetInputState);
+    auto* inputOption = trayMenu.addAction("Input Enabled");
     inputOption->setCheckable(true);
-    inputOption->setChecked(InputHook::GetInputState());
+    inputOption->setChecked(false);
     trayMenu.addAction("Quit", QApplication::instance(), &QApplication::quit);
 
     QSystemTrayIcon trayIcon;
@@ -38,7 +31,18 @@ int main(int argc, char *argv[]){
     trayIcon.setContextMenu(&trayMenu);
     trayIcon.show();
 
+    InputHook::Initialize([&](auto args){
+        if(args.key == VirtualKey::KeyF && args.pressed == KeyState::Pressed)
+            std::cout << "F Pressed" << std::endl;
+
+        return inputOption->isChecked();
+    });
+
+
+
+
+
     auto r =  QApplication::exec();
-    bt_destroy();
+    //bt_destroy();
     return r;
 }

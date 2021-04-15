@@ -22,32 +22,25 @@ namespace {
     };
 
     std::unique_ptr<HookWrapper> instance;
-    bool inputDisabled;
     KeyCallback keyCallback;
 
+    KeyState isPressed(WPARAM wParam){
+        switch (wParam) {
+            case WM_KEYDOWN:
+            case WM_SYSKEYDOWN:
+                return KeyState::Pressed;
+            case WM_KEYUP:
+            case WM_SYSKEYUP:
+                return KeyState::Released;
+            default:
+                throw std::invalid_argument("Illegal Event!");
+        }
+    }
+
     LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam){
-
         if(nCode >= 0) {
-
-            auto *keyStruct = reinterpret_cast<KBDLLHOOKSTRUCT *>(lParam);
-
-            switch (wParam) {
-                case WM_KEYDOWN:
-                    keyCallback((char)MapVirtualKey(keyStruct->vkCode, MAPVK_VK_TO_CHAR));
-                    if (keyStruct->vkCode == VK_ESCAPE)
-                        inputDisabled = !inputDisabled;
-                    break;
-                case WM_KEYUP:
-                    break;
-                case WM_SYSKEYDOWN:
-                    break;
-                case WM_SYSKEYUP:
-                    break;
-                default:
-                    std::cout << "Error: Unknown Event" << std::endl;
-            }
-
-            if(inputDisabled)
+            auto *keyStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
+            if(!keyCallback(KeyEventArgs(static_cast<VirtualKey>(keyStruct->vkCode),  isPressed(wParam))))
                 return 1;
         }
         return CallNextHookEx(instance->keyboard, nCode, wParam, lParam);
@@ -57,15 +50,7 @@ namespace {
 void InputHook::Initialize(KeyCallback kc) {
     if(!instance)
         instance = std::make_unique<HookWrapper>();
-    inputDisabled = false;
     keyCallback = std::move(kc);
 }
 
-void InputHook::SetInputState(bool enable) {
-    inputDisabled = !enable;
-}
-
-bool InputHook::GetInputState() {
-    return !inputDisabled;
-}
 
