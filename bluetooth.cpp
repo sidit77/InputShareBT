@@ -1,3 +1,5 @@
+#include "bluetooth.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -6,6 +8,7 @@
 #include <btstack_tlv.h>
 #include <btstack_tlv_posix.h>
 #include <csignal>
+#include <btstack_run_loop_qt.h>
 #include "btstack_debug.h"
 #include "btstack_event.h"
 #include "btstack_memory.h"
@@ -341,10 +344,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * pack
 
 /* LISTING_START(MainConfiguration): Setup HID Device */
 
-int btstack_main(int argc, const char * argv[]);
-int btstack_main(int argc, const char * argv[]){
-    (void)argc;
-    (void)argv;
+int btstack_main(){
 
     // allow to get found by inquiry
     gap_discoverable_control(1);
@@ -427,13 +427,9 @@ static void packet_handler2 (uint8_t packet_type, uint16_t channel, uint8_t *pac
 #endif
 }
 
-static void sigint_handler(int param){
-    UNUSED(param);
-
+void bt_destroy(){
     printf("CTRL-C - SIGINT received, shutting down..\n");
     log_info("sigint_handler: shutting down");
-
-    UnhookWindowsHookEx(hHook);
 
     // reset anyway
     btstack_stdin_reset();
@@ -442,17 +438,10 @@ static void sigint_handler(int param){
     hci_power_control(HCI_POWER_OFF);
     hci_close();
     log_info("Good bye, see you.\n");
-    exit(0);
-}
-
-static int led_state = 0;
-void hal_led_toggle(void){
-    led_state = 1 - led_state;
-    printf("LED State %u\n", led_state);
 }
 
 #define USB_MAX_PATH_LEN 7
-int main(int argc, const char * argv[]){
+void bt_init() {
 
     // Prevent stdout buffering
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -482,7 +471,7 @@ int main(int argc, const char * argv[]){
 
     /// GET STARTED with BTstack ///
     btstack_memory_init();
-    btstack_run_loop_init(btstack_run_loop_windows_get_instance());
+    btstack_run_loop_init(btstack_run_loop_qt_get_instance());
 
     // if (usb_path_len){
     //     hci_transport_usb_set_path(usb_path_len, usb_path);
@@ -513,14 +502,11 @@ int main(int argc, const char * argv[]){
     hci_event_callback_registration.callback = &packet_handler2;
     hci_add_event_handler(&hci_event_callback_registration);
 
-    // handle CTRL-c
-    signal(SIGINT, sigint_handler);
 
     // setup app
-    btstack_main(argc, argv);
+    btstack_main();
 
     // go
-    btstack_run_loop_execute();
+    //btstack_run_loop_execute();
 
-    return 0;
 }

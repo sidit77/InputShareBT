@@ -4,6 +4,7 @@
 #include <QMenu>
 #include <iostream>
 #include "inputhook.h"
+#include "bluetooth.h"
 
 int main(int argc, char *argv[]){
     Q_INIT_RESOURCE(resources);
@@ -16,7 +17,11 @@ int main(int argc, char *argv[]){
     //Window window;
     //window.show();
 
+    bt_init();
+
     InputHook::Initialize();
+
+
 
     QMenu trayMenu;
     auto* inputOption = trayMenu.addAction("Input Enabled", &InputHook::SetInputState);
@@ -31,5 +36,6 @@ int main(int argc, char *argv[]){
     trayIcon.show();
 
     auto r =  QApplication::exec();
+    bt_destroy();
     return r;
 }
