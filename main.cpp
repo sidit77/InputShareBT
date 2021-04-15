@@ -31,6 +31,5 @@ int main(int argc, char *argv[]){
     trayIcon.show();
 
     auto r =  QApplication::exec();
-    InputHook::Destroy();
     return r;
 }
