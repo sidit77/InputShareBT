@@ -10,8 +10,6 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt5 COMPONENTS Core REQUIRED)
 
-include_directories(".")
-
 add_subdirectory(libs)
 
 add_executable(InputShare

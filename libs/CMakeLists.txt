@@ -137,7 +137,8 @@ set(INCLUDES
     ${BTSTACK_ROOT}/platform/lwip
     ${BTSTACK_ROOT}/platform/lwip/port
     ${BTSTACK_ROOT}/platform/qt
-    ${BTSTACK_ROOT}/platform/windows)
+    ${BTSTACK_ROOT}/platform/windows
+    config)
 
 # create static lib
 add_library(btstack-lib STATIC ${SOURCES})
