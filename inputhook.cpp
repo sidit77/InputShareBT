@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <utility>
 #include "inputhook.h"
 
 namespace {
@@ -22,6 +23,7 @@ namespace {
 
     std::unique_ptr<HookWrapper> instance;
     bool inputDisabled;
+    KeyCallback keyCallback;
 
     LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam){
 
@@ -31,7 +33,7 @@ namespace {
 
             switch (wParam) {
                 case WM_KEYDOWN:
-                    std::cout << (char)MapVirtualKey(keyStruct->vkCode, MAPVK_VK_TO_CHAR) << std::endl;
+                    keyCallback((char)MapVirtualKey(keyStruct->vkCode, MAPVK_VK_TO_CHAR));
                     if (keyStruct->vkCode == VK_ESCAPE)
                         inputDisabled = !inputDisabled;
                     break;
@@ -52,10 +54,11 @@ namespace {
     }
 }
 
-void InputHook::Initialize() {
+void InputHook::Initialize(KeyCallback kc) {
     if(!instance)
         instance = std::make_unique<HookWrapper>();
     inputDisabled = false;
+    keyCallback = std::move(kc);
 }
 
 void InputHook::SetInputState(bool enable) {

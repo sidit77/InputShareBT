@@ -19,7 +19,9 @@ int main(int argc, char *argv[]){
 
     bt_init();
 
-    InputHook::Initialize();
+    InputHook::Initialize([](char c){
+        std::cout << c << std::endl;
+    });
 
 
 
