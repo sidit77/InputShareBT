@@ -182,7 +182,7 @@ static void send_report(int modifier, int keycode){
     hid_device_send_interrupt_message(hid_cid, &report[0], sizeof(report));
 }
 
-static void stdin_process(char character){
+void bt_send_char(char character) {
     uint8_t modifier;
     uint8_t keycode;
     int found;
@@ -211,9 +211,12 @@ static void stdin_process(char character){
     }
 }
 
-void bt_send_char(char c) {
-    stdin_process(c);
-}
+#define TLV_DB_PATH_PREFIX "btstack_"
+#define TLV_DB_PATH_POSTFIX ".tlv"
+static char tlv_db_path[100];
+static const btstack_tlv_t * tlv_impl;
+static btstack_tlv_posix_t   tlv_context;
+static bd_addr_t             local_addr;
 
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * packet, uint16_t packet_size){
     UNUSED(channel);
@@ -221,10 +224,26 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * pack
     uint8_t status;
     switch (packet_type){
         case HCI_EVENT_PACKET:
-            switch (packet[0]){
+            switch (hci_event_packet_get_type(packet)){
                 case BTSTACK_EVENT_STATE:
-                    if (btstack_event_state_get_state(packet) != HCI_STATE_WORKING) return;
+                    if (btstack_event_state_get_state(packet) != HCI_STATE_WORKING)
+                        return;
                     app_state = APP_NOT_CONNECTED;
+
+                    gap_local_bd_addr(local_addr);
+                    printf("BTstack up and running on %s.\n", bd_addr_to_str(local_addr));
+                    strcpy(tlv_db_path, TLV_DB_PATH_PREFIX);
+                    strcat(tlv_db_path, bd_addr_to_str(local_addr));
+                    strcat(tlv_db_path, TLV_DB_PATH_POSTFIX);
+                    tlv_impl = btstack_tlv_posix_init_instance(&tlv_context, tlv_db_path);
+                    btstack_tlv_set_instance(tlv_impl, &tlv_context);
+#ifdef ENABLE_CLASSIC
+                    hci_set_link_key_db(btstack_link_key_db_tlv_get_instance(tlv_impl, &tlv_context));
+#endif
+#ifdef ENABLE_BLE
+                    le_device_db_tlv_configure(tlv_impl, &tlv_context);
+#endif
+
                     break;
 
                 case HCI_EVENT_USER_CONFIRMATION_REQUEST:
@@ -277,33 +296,6 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * pack
     }
 }
 
-#define TLV_DB_PATH_PREFIX "btstack_"
-#define TLV_DB_PATH_POSTFIX ".tlv"
-static char tlv_db_path[100];
-static const btstack_tlv_t * tlv_impl;
-static btstack_tlv_posix_t   tlv_context;
-static bd_addr_t             local_addr;
-
-static void packet_handler2 (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    if (packet_type != HCI_EVENT_PACKET) return;
-    if (hci_event_packet_get_type(packet) != BTSTACK_EVENT_STATE) return;
-    if (btstack_event_state_get_state(packet) != HCI_STATE_WORKING) return;
-    gap_local_bd_addr(local_addr);
-    printf("BTstack up and running on %s.\n", bd_addr_to_str(local_addr));
-    strcpy(tlv_db_path, TLV_DB_PATH_PREFIX);
-    strcat(tlv_db_path, bd_addr_to_str(local_addr));
-    strcat(tlv_db_path, TLV_DB_PATH_POSTFIX);
-    tlv_impl = btstack_tlv_posix_init_instance(&tlv_context, tlv_db_path);
-    btstack_tlv_set_instance(tlv_impl, &tlv_context);
-#ifdef ENABLE_CLASSIC
-    hci_set_link_key_db(btstack_link_key_db_tlv_get_instance(tlv_impl, &tlv_context));
-#endif
-#ifdef ENABLE_BLE
-    le_device_db_tlv_configure(tlv_impl, &tlv_context);
-#endif
-}
-
-
 void bt_init() {
 
     // Prevent stdout buffering
@@ -333,7 +325,7 @@ void bt_init() {
     hci_init(hci_transport_usb_instance(), NULL);
 
     // inform about BTstack state
-    hci_event_callback_registration.callback = &packet_handler2;
+    hci_event_callback_registration.callback = &packet_handler;
     hci_add_event_handler(&hci_event_callback_registration);
 
 
@@ -387,8 +379,8 @@ void bt_init() {
     hid_device_init(hid_boot_device, sizeof(hid_descriptor_keyboard_boot_mode), hid_descriptor_keyboard_boot_mode);
 
     // register for HCI events
-    hci_event_callback_registration.callback = &packet_handler;
-    hci_add_event_handler(&hci_event_callback_registration);
+    //hci_event_callback_registration.callback = &packet_handler;
+    //hci_add_event_handler(&hci_event_callback_registration);
 
     // register for HID events
     hid_device_register_packet_handler(&packet_handler);
