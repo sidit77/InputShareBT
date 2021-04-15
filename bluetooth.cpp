@@ -225,6 +225,11 @@ static void stdin_process(char character){
             break;
     }
 }
+
+void bt_send_char(char c) {
+    stdin_process(c);
+}
+
 #else
 
 // On embedded systems, send constant demo text with fixed period

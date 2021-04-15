@@ -21,6 +21,7 @@ int main(int argc, char *argv[]){
 
     InputHook::Initialize([](char c){
         std::cout << c << std::endl;
+        bt_send_char(c);
     });
 
 
