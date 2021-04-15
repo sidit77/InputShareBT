@@ -1,29 +1,20 @@
 #include "bluetooth.h"
 
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
 #include <cinttypes>
 #include <btstack.h>
 #include <btstack_tlv.h>
 #include <btstack_tlv_posix.h>
-#include <csignal>
 #include <btstack_run_loop_qt.h>
 #include "btstack_debug.h"
 #include "btstack_event.h"
 #include "btstack_memory.h"
 #include "btstack_run_loop.h"
-#include "btstack_run_loop_windows.h"
 #include "ble/le_device_db_tlv.h"
 #include "classic/btstack_link_key_db_tlv.h"
-#include "hal_led.h"
 #include "hci.h"
 #include "hci_dump.h"
-#include "btstack_stdin.h"
-
-#ifdef HAVE_BTSTACK_STDIN
-#include "btstack_stdin.h"
-#endif
 
 // to enable demo text on POSIX systems
 // #undef HAVE_BTSTACK_STDIN
@@ -191,12 +182,6 @@ static void send_report(int modifier, int keycode){
     hid_device_send_interrupt_message(hid_cid, &report[0], sizeof(report));
 }
 
-// Demo Application
-
-#ifdef HAVE_BTSTACK_STDIN
-
-// On systems with STDIN, we can directly type on the console
-
 static void stdin_process(char character){
     uint8_t modifier;
     uint8_t keycode;
@@ -230,50 +215,6 @@ void bt_send_char(char c) {
     stdin_process(c);
 }
 
-#else
-
-// On embedded systems, send constant demo text with fixed period
-
-#define TYPING_PERIOD_MS 100
-static const char * demo_text = "\n\nHello World!\n\nThis is the BTstack HID Keyboard Demo running on an Embedded Device.\n\n";
-
-static int demo_pos;
-static btstack_timer_source_t typing_timer;
-
-static void typing_timer_handler(btstack_timer_source_t * ts){
-
-    // abort if not connected
-    if (!hid_cid) return;
-
-    // get next character
-    uint8_t character = demo_text[demo_pos++];
-    if (demo_text[demo_pos] == 0){
-        demo_pos = 0;
-    }
-
-    // get keycodeand send
-    uint8_t modifier;
-    uint8_t keycode;
-    int found = keycode_and_modifer_us_for_character(character, &keycode, &modifier);
-    if (found){
-        send_key(modifier, keycode);
-    }
-
-    // set next timer
-    btstack_run_loop_set_timer(ts, TYPING_PERIOD_MS);
-    btstack_run_loop_add_timer(ts);
-}
-
-static void hid_embedded_start_typing(void){
-    demo_pos = 0;
-    // set one-shot timer
-    typing_timer.process = &typing_timer_handler;
-    btstack_run_loop_set_timer(&typing_timer, TYPING_PERIOD_MS);
-    btstack_run_loop_add_timer(&typing_timer);
-}
-
-#endif
-
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * packet, uint16_t packet_size){
     UNUSED(channel);
     UNUSED(packet_size);
@@ -305,12 +246,8 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * pack
                             }
                             app_state = APP_CONNECTED;
                             hid_cid = hid_subevent_connection_opened_get_hid_cid(packet);
-#ifdef HAVE_BTSTACK_STDIN
                             printf("HID Connected, please start typing...\n");
-#else
-                            printf("HID Connected, sending demo text...\n");
-                            hid_embedded_start_typing();
-#endif
+
                             break;
                         case HID_SUBEVENT_CONNECTION_CLOSED:
                             printf("HID Disconnected\n");
@@ -340,7 +277,67 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * pack
     }
 }
 
-/* @section Main Application Setup
+#define TLV_DB_PATH_PREFIX "btstack_"
+#define TLV_DB_PATH_POSTFIX ".tlv"
+static char tlv_db_path[100];
+static const btstack_tlv_t * tlv_impl;
+static btstack_tlv_posix_t   tlv_context;
+static bd_addr_t             local_addr;
+
+static void packet_handler2 (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
+    if (packet_type != HCI_EVENT_PACKET) return;
+    if (hci_event_packet_get_type(packet) != BTSTACK_EVENT_STATE) return;
+    if (btstack_event_state_get_state(packet) != HCI_STATE_WORKING) return;
+    gap_local_bd_addr(local_addr);
+    printf("BTstack up and running on %s.\n", bd_addr_to_str(local_addr));
+    strcpy(tlv_db_path, TLV_DB_PATH_PREFIX);
+    strcat(tlv_db_path, bd_addr_to_str(local_addr));
+    strcat(tlv_db_path, TLV_DB_PATH_POSTFIX);
+    tlv_impl = btstack_tlv_posix_init_instance(&tlv_context, tlv_db_path);
+    btstack_tlv_set_instance(tlv_impl, &tlv_context);
+#ifdef ENABLE_CLASSIC
+    hci_set_link_key_db(btstack_link_key_db_tlv_get_instance(tlv_impl, &tlv_context));
+#endif
+#ifdef ENABLE_BLE
+    le_device_db_tlv_configure(tlv_impl, &tlv_context);
+#endif
+}
+
+
+void bt_init() {
+
+    // Prevent stdout buffering
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    printf("BTstack/windows-winusb booting up\n");
+
+
+    /// GET STARTED with BTstack ///
+    btstack_memory_init();
+    btstack_run_loop_init(btstack_run_loop_qt_get_instance());
+
+    // if (usb_path_len){
+    //     hci_transport_usb_set_path(usb_path_len, usb_path);
+    // }
+
+    // use logger: format HCI_DUMP_PACKETLOGGER, HCI_DUMP_BLUEZ or HCI_DUMP_STDOUT
+
+    char pklg_path[100];
+    strcpy(pklg_path, "hci_dump");
+
+    strcat(pklg_path, ".pklg");
+    printf("Packet Log: %s\n", pklg_path);
+    hci_dump_open(pklg_path, HCI_DUMP_PACKETLOGGER);
+
+    // init HCI
+    hci_init(hci_transport_usb_instance(), NULL);
+
+    // inform about BTstack state
+    hci_event_callback_registration.callback = &packet_handler2;
+    hci_add_event_handler(&hci_event_callback_registration);
+
+
+    /* @section Main Application Setup
  *
  * @text Listing MainConfiguration shows main application code.
  * To run a HID Device service you need to initialize the SDP, and to create and register HID Device record with it.
@@ -349,8 +346,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * pack
 
 /* LISTING_START(MainConfiguration): Setup HID Device */
 
-int btstack_main(){
-
+    // setup app
     // allow to get found by inquiry
     gap_discoverable_control(1);
     // use Limited Discoverable Mode; Peripheral; Keyboard as CoD
@@ -397,39 +393,14 @@ int btstack_main(){
     // register for HID events
     hid_device_register_packet_handler(&packet_handler);
 
-#ifdef HAVE_BTSTACK_STDIN
     sscanf_bd_addr(device_addr_string, device_addr);
-    btstack_stdin_setup(stdin_process);
-#endif
-    // turn on!
+    //btstack_stdin_setup(stdin_process);
+
     hci_power_control(HCI_POWER_ON);
-    return 0;
-}
 
-#define TLV_DB_PATH_PREFIX "btstack_"
-#define TLV_DB_PATH_POSTFIX ".tlv"
-static char tlv_db_path[100];
-static const btstack_tlv_t * tlv_impl;
-static btstack_tlv_posix_t   tlv_context;
-static bd_addr_t             local_addr;
+    // go
+    //btstack_run_loop_execute();
 
-static void packet_handler2 (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    if (packet_type != HCI_EVENT_PACKET) return;
-    if (hci_event_packet_get_type(packet) != BTSTACK_EVENT_STATE) return;
-    if (btstack_event_state_get_state(packet) != HCI_STATE_WORKING) return;
-    gap_local_bd_addr(local_addr);
-    printf("BTstack up and running on %s.\n", bd_addr_to_str(local_addr));
-    strcpy(tlv_db_path, TLV_DB_PATH_PREFIX);
-    strcat(tlv_db_path, bd_addr_to_str(local_addr));
-    strcat(tlv_db_path, TLV_DB_PATH_POSTFIX);
-    tlv_impl = btstack_tlv_posix_init_instance(&tlv_context, tlv_db_path);
-    btstack_tlv_set_instance(tlv_impl, &tlv_context);
-#ifdef ENABLE_CLASSIC
-    hci_set_link_key_db(btstack_link_key_db_tlv_get_instance(tlv_impl, &tlv_context));
-#endif
-#ifdef ENABLE_BLE
-    le_device_db_tlv_configure(tlv_impl, &tlv_context);
-#endif
 }
 
 void bt_destroy(){
@@ -437,81 +408,10 @@ void bt_destroy(){
     log_info("sigint_handler: shutting down");
 
     // reset anyway
-    btstack_stdin_reset();
+    //btstack_stdin_reset();
 
     // power down
     hci_power_control(HCI_POWER_OFF);
     hci_close();
     log_info("Good bye, see you.\n");
-}
-
-#define USB_MAX_PATH_LEN 7
-void bt_init() {
-
-    // Prevent stdout buffering
-    setvbuf(stdout, NULL, _IONBF, 0);
-
-    printf("BTstack/windows-winusb booting up\n");
-
-#if 0
-    int usb_path_len = 0;
-    uint8_t usb_path[USB_MAX_PATH_LEN];
-    if (argc >= 3 && strcmp(argv[1], "-u") == 0){
-        // parse command line options for "-u 11:22:33"
-        const char * port_str = argv[2];
-        printf("Specified USB Path: ");
-        while (1){
-            char * delimiter;
-            int port = strtol(port_str, &delimiter, 16);
-            usb_path[usb_path_len] = port;
-            usb_path_len++;
-            printf("%02x ", port);
-            if (!delimiter) break;
-            if (*delimiter != ':' && *delimiter != '-') break;
-            port_str = delimiter+1;
-        }
-        printf("\n");
-    }
-#endif
-
-    /// GET STARTED with BTstack ///
-    btstack_memory_init();
-    btstack_run_loop_init(btstack_run_loop_qt_get_instance());
-
-    // if (usb_path_len){
-    //     hci_transport_usb_set_path(usb_path_len, usb_path);
-    // }
-
-    // use logger: format HCI_DUMP_PACKETLOGGER, HCI_DUMP_BLUEZ or HCI_DUMP_STDOUT
-
-#if 1
-    char pklg_path[100];
-    strcpy(pklg_path, "hci_dump");
-#if 0
-    if (usb_path_len){
-        strcat(pklg_path, "_");
-        strcat(pklg_path, argv[2]);
-    }
-#endif
-    strcat(pklg_path, ".pklg");
-    printf("Packet Log: %s\n", pklg_path);
-    hci_dump_open(pklg_path, HCI_DUMP_PACKETLOGGER);
-#else
-    hci_dump_open(NULL, HCI_DUMP_STDOUT);
-#endif
-
-    // init HCI
-    hci_init(hci_transport_usb_instance(), NULL);
-
-    // inform about BTstack state
-    hci_event_callback_registration.callback = &packet_handler2;
-    hci_add_event_handler(&hci_event_callback_registration);
-
-
-    // setup app
-    btstack_main();
-
-    // go
-    //btstack_run_loop_execute();
-
 }
