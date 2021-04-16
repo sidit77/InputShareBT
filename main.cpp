@@ -3,6 +3,7 @@
 #include <QSystemTrayIcon>
 #include <QMenu>
 #include <iostream>
+#include <bitset>
 #include "inputhook.h"
 #include "bluetooth.h"
 #include "hid.h"
@@ -30,11 +31,14 @@ int main(int argc, char *argv[]){
     trayIcon.setContextMenu(&trayMenu);
     trayIcon.show();
 
-    bt_init();
+
+    inputOption->setChecked(false);
+    //bt_init();
 
     //uint8_t modifiers = 0;
 
     auto modifiers = HIDModifierKeys::None;
+    bool canSwap = true;
 
     InputHook::Initialize([&](auto args){
         auto mod = getModifiers(args.key);
@@ -46,10 +50,19 @@ int main(int argc, char *argv[]){
         } else {
 
         }
+        if(modifiers & (HIDModifierKeys::LCtrl | HIDModifierKeys::RCtrl)){
+            if(canSwap){
+                std::cout << "Swaping" << std::endl;
+                inputOption->setChecked(!inputOption->isChecked());
+                canSwap = false;
+            }
+        } else {
+            canSwap = true;
+        }
         if(!inputOption->isChecked()){
             if(args.state == KeyState::Pressed){
-                printf("Keycode: 0x%x Scancode: Ox%x Translate: 0x%x\n", (uint32_t)args.key, args.scanCode, getHidKeycode(args.scanCode));
-                bt_send_char(static_cast<uint8_t>(modifiers), getHidKeycode(args.scanCode));
+                //printf("Keycode: 0x%x Scancode: Ox%x Translate: 0x%x\n", (uint32_t)args.key, args.scanCode, getHidKeycode(args.scanCode));
+                //bt_send_char(static_cast<uint8_t>(modifiers), getHidKeycode(args.scanCode));
             }
 
             return false;
@@ -60,6 +73,6 @@ int main(int argc, char *argv[]){
 
 
     auto r =  QApplication::exec();
-    bt_destroy();
+    //bt_destroy();
     return r;
 }

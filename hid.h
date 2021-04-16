@@ -24,6 +24,12 @@ inline HIDModifierKeys operator | (HIDModifierKeys lhs, HIDModifierKeys rhs)
     return static_cast<HIDModifierKeys>(static_cast<T>(lhs) | static_cast<T>(rhs));
 }
 
+inline bool operator & (HIDModifierKeys lhs, HIDModifierKeys rhs)
+{
+    using T = std::underlying_type_t<HIDModifierKeys>;
+    return (static_cast<T>(lhs) & static_cast<T>(rhs)) == static_cast<T>(rhs);
+}
+
 inline HIDModifierKeys& operator += (HIDModifierKeys& lhs, HIDModifierKeys rhs)
 {
     using T = std::underlying_type_t<HIDModifierKeys>;
