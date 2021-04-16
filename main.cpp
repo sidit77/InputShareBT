@@ -7,15 +7,6 @@
 #include "bluetooth.h"
 #include "hid.h"
 
-#define KEY_MOD_LCTRL  0x01
-#define KEY_MOD_LSHIFT 0x02
-#define KEY_MOD_LALT   0x04
-#define KEY_MOD_LMETA  0x08
-#define KEY_MOD_RCTRL  0x10
-#define KEY_MOD_RSHIFT 0x20
-#define KEY_MOD_RALT   0x40
-#define KEY_MOD_RMETA  0x80
-
 int main(int argc, char *argv[]){
     Q_INIT_RESOURCE(resources);
 
@@ -41,21 +32,24 @@ int main(int argc, char *argv[]){
 
     bt_init();
 
-    uint8_t modifiers = 0;
+    //uint8_t modifiers = 0;
+
+    auto modifiers = HIDModifierKeys::None;
 
     InputHook::Initialize([&](auto args){
-        if(args.key == VirtualKey::LShift   && args.state == KeyState::Pressed)
-            modifiers |= KEY_MOD_LSHIFT;
-        if(args.key == VirtualKey::LControl && args.state == KeyState::Pressed)
-            modifiers |= KEY_MOD_LCTRL;
-        if(args.key == VirtualKey::LShift && args.state == KeyState::Released)
-            modifiers &= ~KEY_MOD_LSHIFT;
-        if(args.key == VirtualKey::LControl && args.state == KeyState::Released)
-            modifiers &= ~KEY_MOD_LCTRL;
+        auto mod = getModifiers(args.key);
+        if(mod != HIDModifierKeys::None){
+            if(args.state == KeyState::Pressed)
+                modifiers += mod;
+            if(args.state == KeyState::Released)
+                modifiers -= mod;
+        } else {
+
+        }
         if(!inputOption->isChecked()){
             if(args.state == KeyState::Pressed){
                 printf("Keycode: 0x%x Scancode: Ox%x Translate: 0x%x\n", (uint32_t)args.key, args.scanCode, getHidKeycode(args.scanCode));
-                bt_send_char(modifiers, getHidKeycode(args.scanCode));
+                bt_send_char(static_cast<uint8_t>(modifiers), getHidKeycode(args.scanCode));
             }
 
             return false;

@@ -154,3 +154,17 @@ uint8_t getHidKeycode(uint16_t scanCode) {
         default: return 0x0;
     }
 }
+
+HIDModifierKeys getModifiers(VirtualKey key) {
+    switch (key) {
+        case VirtualKey::LShift:   return HIDModifierKeys::LShift;
+        case VirtualKey::LControl: return HIDModifierKeys::LCtrl;
+        case VirtualKey::LWin:     return HIDModifierKeys::LMeta;
+        case VirtualKey::LMenu:    return HIDModifierKeys::LAlt;
+        case VirtualKey::RShift:   return HIDModifierKeys::RShift;
+        case VirtualKey::RControl: return HIDModifierKeys::RCtrl;
+        case VirtualKey::RWin:     return HIDModifierKeys::RMeta;
+        case VirtualKey::RMenu:    return HIDModifierKeys::RAlt;
+        default: return HIDModifierKeys::None;
+    }
+}
