@@ -41,15 +41,21 @@ int main(int argc, char *argv[]){
 
     bt_init();
 
+    uint8_t modifiers = 0;
+
     InputHook::Initialize([&](auto args){
+        if(args.key == VirtualKey::LShift   && args.state == KeyState::Pressed)
+            modifiers |= KEY_MOD_LSHIFT;
+        if(args.key == VirtualKey::LControl && args.state == KeyState::Pressed)
+            modifiers |= KEY_MOD_LCTRL;
+        if(args.key == VirtualKey::LShift && args.state == KeyState::Released)
+            modifiers &= ~KEY_MOD_LSHIFT;
+        if(args.key == VirtualKey::LControl && args.state == KeyState::Released)
+            modifiers &= ~KEY_MOD_LCTRL;
         if(!inputOption->isChecked()){
-            if(args.pressed == KeyState::Pressed){
-                uint8_t mods = 0;
-                if(GetKeyState((uint32_t)VirtualKey::LShift) & 0x8000)
-                    mods |= KEY_MOD_LSHIFT;
-                if(GetKeyState((uint32_t)VirtualKey::LControl) & 0x8000)
-                    mods |= KEY_MOD_LCTRL;
-                bt_send_char(mods, keycode_windows_to_hid(args.scanCode));
+            if(args.state == KeyState::Pressed){
+                printf("Keycode: 0x%x Scancode: Ox%x Translate: 0x%x\n", (uint32_t)args.key, args.scanCode, getHidKeycode(args.scanCode));
+                bt_send_char(modifiers, getHidKeycode(args.scanCode));
             }
 
             return false;

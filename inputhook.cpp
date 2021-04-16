@@ -24,7 +24,7 @@ namespace {
     std::unique_ptr<HookWrapper> instance;
     KeyCallback keyCallback;
 
-    KeyState isPressed(WPARAM wParam){
+    KeyState getState(WPARAM wParam){
         switch (wParam) {
             case WM_KEYDOWN:
             case WM_SYSKEYDOWN:
@@ -37,10 +37,24 @@ namespace {
         }
     }
 
+    uint16_t getScanCode(KBDLLHOOKSTRUCT* keyStruct){
+        auto scanCode = static_cast<uint16_t>(keyStruct->scanCode);
+        if(scanCode == 0x0 || keyStruct->vkCode == VK_SNAPSHOT || keyStruct->vkCode == VK_SCROLL || keyStruct->vkCode == VK_PAUSE || keyStruct->vkCode == VK_NUMLOCK){
+            scanCode = static_cast<uint16_t>(MapVirtualKey(keyStruct->vkCode, MAPVK_VK_TO_VSC_EX));
+        }else{
+            if(keyStruct->flags & LLKHF_EXTENDED)
+                scanCode |= 0xe000;
+        }
+        return scanCode;
+    }
+
     LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam){
         if(nCode >= 0) {
             auto *keyStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
-            if(!keyCallback(KeyEventArgs(static_cast<VirtualKey>(keyStruct->vkCode), static_cast<uint16_t>(keyStruct->scanCode), isPressed(wParam))))
+            if(!keyCallback(KeyEventArgs(
+                    static_cast<VirtualKey>(keyStruct->vkCode),
+                    getScanCode(keyStruct),
+                    getState(wParam))))
                 return 1;
         }
         return CallNextHookEx(instance->keyboard, nCode, wParam, lParam);

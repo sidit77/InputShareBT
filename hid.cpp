@@ -1,137 +1,156 @@
-
-#include <array>
 #include "hid.h"
 
-namespace {
-
-    template<typename E>
-    constexpr auto to_integral(E e) -> typename std::underlying_type<E>::type
-    {
-        return static_cast<typename std::underlying_type<E>::type>(e);
+uint8_t getHidKeycode(uint16_t scanCode) {
+    switch(scanCode){
+        case 0x1: return 0x29;
+        case 0x2: return 0x1e;
+        case 0x3: return 0x1f;
+        case 0x4: return 0x20;
+        case 0x5: return 0x21;
+        case 0x6: return 0x22;
+        case 0x7: return 0x23;
+        case 0x8: return 0x24;
+        case 0x9: return 0x25;
+        case 0xa: return 0x26;
+        case 0xb: return 0x27;
+        case 0xc: return 0x2d;
+        case 0xd: return 0x2e;
+        case 0xe: return 0x2a;
+        case 0xf: return 0x2b;
+        case 0x10: return 0x14;
+        case 0x11: return 0x1a;
+        case 0x12: return 0x8;
+        case 0x13: return 0x15;
+        case 0x14: return 0x17;
+        case 0x15: return 0x1c;
+        case 0x16: return 0x18;
+        case 0x17: return 0xc;
+        case 0x18: return 0x12;
+        case 0x19: return 0x13;
+        case 0x1a: return 0x2f;
+        case 0x1b: return 0x30;
+        case 0x1c: return 0x28;
+        case 0x1d: return 0xe0;
+        case 0x1e: return 0x4;
+        case 0x1f: return 0x16;
+        case 0x20: return 0x7;
+        case 0x21: return 0x9;
+        case 0x22: return 0xa;
+        case 0x23: return 0xb;
+        case 0x24: return 0xd;
+        case 0x25: return 0xe;
+        case 0x26: return 0xf;
+        case 0x27: return 0x33;
+        case 0x28: return 0x34;
+        case 0x29: return 0x35;
+        case 0x2a: return 0xe1;
+        case 0x2b: return 0x31;
+        case 0x2c: return 0x1d;
+        case 0x2d: return 0x1b;
+        case 0x2e: return 0x6;
+        case 0x2f: return 0x19;
+        case 0x30: return 0x5;
+        case 0x31: return 0x11;
+        case 0x32: return 0x10;
+        case 0x33: return 0x36;
+        case 0x34: return 0x37;
+        case 0x35: return 0x38;
+        case 0x36: return 0xe5;
+        case 0x37: return 0x55;
+        case 0x38: return 0xe2;
+        case 0x39: return 0x2c;
+        case 0x3a: return 0x39;
+        case 0x3b: return 0x3a;
+        case 0x3c: return 0x3b;
+        case 0x3d: return 0x3c;
+        case 0x3e: return 0x3d;
+        case 0x3f: return 0x3e;
+        case 0x40: return 0x3f;
+        case 0x41: return 0x40;
+        case 0x42: return 0x41;
+        case 0x43: return 0x42;
+        case 0x44: return 0x43;
+        case 0x45: return 0x53;
+        case 0x46: return 0x47;
+        case 0x47: return 0x5f;
+        case 0x48: return 0x60;
+        case 0x49: return 0x61;
+        case 0x4a: return 0x56;
+        case 0x4b: return 0x5c;
+        case 0x4c: return 0x5d;
+        case 0x4d: return 0x5e;
+        case 0x4e: return 0x57;
+        case 0x4f: return 0x59;
+        case 0x50: return 0x5a;
+        case 0x51: return 0x5b;
+        case 0x52: return 0x62;
+        case 0x53: return 0x63;
+        case 0x54: return 0x46;
+        case 0x56: return 0x64;
+        case 0x57: return 0x44;
+        case 0x58: return 0x45;
+        case 0x59: return 0x67;
+        case 0x5c: return 0x8c;
+        case 0x64: return 0x68;
+        case 0x65: return 0x69;
+        case 0x66: return 0x6a;
+        case 0x67: return 0x6b;
+        case 0x68: return 0x6c;
+        case 0x69: return 0x6d;
+        case 0x6a: return 0x6e;
+        case 0x6b: return 0x6f;
+        case 0x6c: return 0x70;
+        case 0x6d: return 0x71;
+        case 0x6e: return 0x72;
+        case 0x70: return 0x88;
+        case 0x73: return 0x87;
+        case 0x76: return 0x73;
+        case 0x77: return 0x93;
+        case 0x78: return 0x92;
+        case 0x79: return 0x8a;
+        case 0x7b: return 0x8b;
+        case 0x7d: return 0x89;
+        case 0x7e: return 0x85;
+        case 0xf1: return 0x91;
+        case 0xf2: return 0x90;
+        case 0xfc: return 0x2;
+        case 0xff: return 0x1;
+        case 0xe010: return 0xea;
+        case 0xe019: return 0xeb;
+        case 0xe01c: return 0x58;
+        case 0xe01d: return 0xe4;
+        case 0xe020: return 0xef;
+        case 0xe021: return 0xfb;
+        case 0xe022: return 0xe8;
+        case 0xe024: return 0xe9;
+        case 0xe02e: return 0xee;
+        case 0xe030: return 0xed;
+        case 0xe032: return 0xf0;
+        case 0xe035: return 0x54;
+        case 0xe038: return 0xe6;
+        case 0xe047: return 0x4a;
+        case 0xe048: return 0x52;
+        case 0xe049: return 0x4b;
+        case 0xe04b: return 0x50;
+        case 0xe04d: return 0x4f;
+        case 0xe04f: return 0x4d;
+        case 0xe050: return 0x51;
+        case 0xe051: return 0x4e;
+        case 0xe052: return 0x49;
+        case 0xe053: return 0x4c;
+        case 0xe05b: return 0xe3;
+        case 0xe05c: return 0xe7;
+        case 0xe05d: return 0x65;
+        case 0xe05e: return 0x66;
+        case 0xe05f: return 0x82;
+        case 0xe063: return 0x83;
+        case 0xe065: return 0xf4;
+        case 0xe067: return 0xfa;
+        case 0xe068: return 0xf3;
+        case 0xe069: return 0xf2;
+        case 0xe06a: return 0xf1;
+        case 0xe06d: return 0xec;
+        case 0xe11d: return 0x48;
+        default: return 0x0;
     }
-
-    constexpr auto vk2hid = []{
-        std::array<uint8_t, 255> table = {};
-
-        table[to_integral(VirtualKey::KeyA)] = 0x04; // Keyboard a and A
-        table[to_integral(VirtualKey::KeyB)] = 0x05; // Keyboard b and B
-        table[to_integral(VirtualKey::KeyC)] = 0x06; // Keyboard c and C
-        table[to_integral(VirtualKey::KeyD)] = 0x07; // Keyboard d and D
-        table[to_integral(VirtualKey::KeyE)] = 0x08; // Keyboard e and E
-        table[to_integral(VirtualKey::KeyF)] = 0x09; // Keyboard f and F
-        table[to_integral(VirtualKey::KeyG)] = 0x0A; // Keyboard g and G
-        table[to_integral(VirtualKey::KeyH)] = 0x0B; // Keyboard h and H
-        table[to_integral(VirtualKey::KeyI)] = 0x0C; // Keyboard i and I
-        table[to_integral(VirtualKey::KeyJ)] = 0x0D; // Keyboard j and J
-        table[to_integral(VirtualKey::KeyK)] = 0x0E; // Keyboard k and K
-        table[to_integral(VirtualKey::KeyL)] = 0x0F; // Keyboard l and L
-        table[to_integral(VirtualKey::KeyM)] = 0x10; // Keyboard m and M
-        table[to_integral(VirtualKey::KeyN)] = 0x11; // Keyboard n and N
-        table[to_integral(VirtualKey::KeyO)] = 0x12; // Keyboard o and O
-        table[to_integral(VirtualKey::KeyP)] = 0x13; // Keyboard p and P
-        table[to_integral(VirtualKey::KeyQ)] = 0x14; // Keyboard q and Q
-        table[to_integral(VirtualKey::KeyR)] = 0x15; // Keyboard r and R
-        table[to_integral(VirtualKey::KeyS)] = 0x16; // Keyboard s and S
-        table[to_integral(VirtualKey::KeyT)] = 0x17; // Keyboard t and T
-        table[to_integral(VirtualKey::KeyU)] = 0x18; // Keyboard u and U
-        table[to_integral(VirtualKey::KeyV)] = 0x19; // Keyboard v and V
-        table[to_integral(VirtualKey::KeyW)] = 0x1A; // Keyboard w and W
-        table[to_integral(VirtualKey::KeyX)] = 0x1B; // Keyboard x and X
-        table[to_integral(VirtualKey::KeyY)] = 0x1C; // Keyboard y and Y
-        table[to_integral(VirtualKey::KeyZ)] = 0x1D; // Keyboard z and Z
-
-table[to_integral(VirtualKey::Key1)] = 0x1E;  // Keyboard 1 and !
-table[to_integral(VirtualKey::Key2)] = 0x1F;  // Keyboard 2 and @
-table[to_integral(VirtualKey::Key3)] = 0x20;  // Keyboard 3 and #
-table[to_integral(VirtualKey::Key4)] = 0x21;  // Keyboard 4 and $
-table[to_integral(VirtualKey::Key5)] = 0x22;  // Keyboard 5 and %
-table[to_integral(VirtualKey::Key6)] = 0x23;  // Keyboard 6 and ^
-table[to_integral(VirtualKey::Key7)] = 0x24;  // Keyboard 7 and &
-table[to_integral(VirtualKey::Key8)] = 0x25;  // Keyboard 8 and *
-table[to_integral(VirtualKey::Key9)] = 0x26;  // Keyboard 9 and (
-table[to_integral(VirtualKey::Key0)] = 0x27;  // Keyboard 0 and )
-
-//table[to_integral(VirtualKey::Return)] = 0x28; // Keyboard Return (ENTER)
-//table[to_integral(VirtualKey::Escape)] = 0x29; // Keyboard ESCAPE
-//table[to_integral(VirtualKey::Delete)] = 0x2A; // Keyboard DELETE (Backspace)
-//table[to_integral(VirtualKey::Tab)] = 0x2B; // Keyboard Tab
-//table[to_integral(VirtualKey::Space)] = 0x2C; // Keyboard Spacebar
-//table[to_integral(VirtualKey::OemMinus)] = 0x2D; // Keyboard - and _
-//table[to_integral(VirtualKey::Eq     )] = 0x2E; // Keyboard = and +
-//table[to_integral(VirtualKey::Leftbrace )] = 0x2F; // Keyboard [ and {
-//table[to_integral(VirtualKey::Rightbrace)] = 0x30; // Keyboard ] and }
-//table[to_integral(VirtualKey::Backslash )] = 0x31; // Keyboard \ and |
-//table[to_integral(VirtualKey::Hashtilde )] = 0x32; // Keyboard Non-US # and ~
-//table[to_integral(VirtualKey::Semicolon )] = 0x33; // Keyboard ; and :
-//table[to_integral(VirtualKey::Apostrophe)] = 0x34; // Keyboard ' and "
-//table[to_integral(VirtualKey::Grave     )] = 0x35; // Keyboard ` and ~
-//table[to_integral(VirtualKey::Comma     )] = 0x36; // Keyboard , and <
-//table[to_integral(VirtualKey::Dot       )] = 0x37; // Keyboard . and >
-//table[to_integral(VirtualKey::Slash     )] = 0x38; // Keyboard / and ?
-//table[to_integral(VirtualKey::Capslock  )] = 0x39; // Keyboard Caps Lock
-
-table[to_integral(VirtualKey::F1)]  = 0x3A; // Keyboard F1
-table[to_integral(VirtualKey::F2)]  = 0x3B; // Keyboard F2
-table[to_integral(VirtualKey::F3)]  = 0x3C; // Keyboard F3
-table[to_integral(VirtualKey::F4)]  = 0x3D; // Keyboard F4
-table[to_integral(VirtualKey::F5)]  = 0x3E; // Keyboard F5
-table[to_integral(VirtualKey::F6)]  = 0x3F; // Keyboard F6
-table[to_integral(VirtualKey::F7)]  = 0x40; // Keyboard F7
-table[to_integral(VirtualKey::F8)]  = 0x41; // Keyboard F8
-table[to_integral(VirtualKey::F9)]  = 0x42; // Keyboard F9
-table[to_integral(VirtualKey::F10)] = 0x43; // Keyboard F10
-table[to_integral(VirtualKey::F11)] = 0x44; // Keyboard F11
-table[to_integral(VirtualKey::F12)] = 0x45; // Keyboard F12
-
-        return table;
-    }();
-}
-
-uint8_t getHidKeycode(VirtualKey key) {
-    return vk2hid[to_integral(key)];
-}
-
-
-const uint8_t KEYCODE_WINDOWS_TO_HID[256] = {
-        0,41,30,31,32,33,34,35,36,37,38,39,45,46,42,43,20,26,8,21,23,28,24,12,18,19,
-        47,48,158,224,4,22,7,9,10,11,13,14,15,51,52,53,225,49,29,27,6,25,5,17,16,54,
-        55,56,229,0,226,0,57,58,59,60,61,62,63,64,65,66,67,72,71,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,68,69,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,228,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,70,230,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,74,82,75,0,80,0,79,0,77,81,78,73,76,0,0,0,0,0,0,0,227,231,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-};
-
-uint8_t keycode_windows_to_hid(unsigned scancode) {
-    if (scancode >= 256)
-        return 0;
-    return KEYCODE_WINDOWS_TO_HID[scancode];
-}
-
-static const char KEYCODE_WINDOWS_NAME_DATA[] =
-        "\0'\0,\0-\0.\0/\0;\0=\0A\0B\0Backspace\0C\0Caps Lock\0D\0Delete\0E\0End\0"
-        "Enter\0Escape\0F\0F1\0F10\0F11\0F12\0F2\0F3\0F4\0F5\0F6\0F7\0F8\0F9\0G\0H"
-        "\0Home\0I\0Insert\0J\0K\0L\0Left\0Left Alt\0Left Control\0Left Shift\0Lef"
-        "t Windows\0M\0N\0O\0P\0Page Down\0Page Up\0Pause\0Print Screen\0Q\0R\0Rig"
-        "ht\0Right Alt\0Right Control\0Right Shift\0Right Windows\0S\0Scroll Lock"
-        "\0T\0Tab\0U\0V\0W\0X\0Y\0Z\0[\0\\\0]\0`";
-static const unsigned short KEYCODE_WINDOWS_NAME_OFFSET[] = {
-        0,0,0,0,15,17,29,41,50,69,110,112,119,128,130,132,185,187,189,191,230,232,
-        290,304,310,312,314,316,318,320,72,84,90,93,96,99,102,105,108,76,0,62,19,
-        306,0,5,13,322,326,324,0,11,1,328,3,7,9,31,71,86,89,92,95,98,101,104,107,74,
-        78,82,217,292,211,121,114,203,43,52,193,234,134,198,208,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,56,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,148,161,139,172,250,264,240,276
-};
-const char *keycode_windows_name(unsigned index) {
-    unsigned offset;
-    if (232 <= index)
-        return 0;
-    offset = KEYCODE_WINDOWS_NAME_OFFSET[index];
-    if (offset == 0)
-        return 0;
-    return KEYCODE_WINDOWS_NAME_DATA + offset;
 }
