@@ -4,7 +4,9 @@
 #include <type_traits>
 #include "keys.h"
 
-uint8_t getHidKeycode(uint16_t scanCode);
+typedef uint8_t HIDKeyCode;
+
+HIDKeyCode getHidKeycode(ScanCode scanCode);
 
 enum class HIDModifierKeys : uint8_t {
     None    = 0x00,

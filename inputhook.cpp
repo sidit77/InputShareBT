@@ -1,6 +1,5 @@
 #include <iostream>
 #include <memory>
-#include <utility>
 #include "inputhook.h"
 
 namespace {
@@ -37,10 +36,10 @@ namespace {
         }
     }
 
-    uint16_t getScanCode(KBDLLHOOKSTRUCT* keyStruct){
-        auto scanCode = static_cast<uint16_t>(keyStruct->scanCode);
+    ScanCode getScanCode(KBDLLHOOKSTRUCT* keyStruct){
+        auto scanCode = static_cast<ScanCode>(keyStruct->scanCode);
         if(scanCode == 0x0 || keyStruct->vkCode == VK_SNAPSHOT || keyStruct->vkCode == VK_SCROLL || keyStruct->vkCode == VK_PAUSE || keyStruct->vkCode == VK_NUMLOCK){
-            scanCode = static_cast<uint16_t>(MapVirtualKey(keyStruct->vkCode, MAPVK_VK_TO_VSC_EX));
+            scanCode = static_cast<ScanCode>(MapVirtualKey(keyStruct->vkCode, MAPVK_VK_TO_VSC_EX));
         }else{
             if(keyStruct->flags & LLKHF_EXTENDED)
                 scanCode |= 0xe000;

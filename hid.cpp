@@ -1,6 +1,6 @@
 #include "hid.h"
 
-uint8_t getHidKeycode(uint16_t scanCode) {
+HIDKeyCode getHidKeycode(ScanCode scanCode) {
     switch(scanCode){
         case 0x1: return 0x29;
         case 0x2: return 0x1e;

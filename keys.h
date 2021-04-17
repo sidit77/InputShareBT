@@ -2,6 +2,8 @@
 
 #include "cstdint"
 
+typedef uint16_t ScanCode;
+
 enum class KeyState {
     Pressed,
     Released
