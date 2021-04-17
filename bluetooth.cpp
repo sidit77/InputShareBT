@@ -94,25 +94,29 @@ static enum {
 
 
 // HID Report sending
-static int send_keycode;
-static int send_modifier;
+static std::optional<std::pair<HIDModifierKeys, HIDKeys>> send_keys;
+//static HIDKeys send_keycodes;
+//static HIDModifierKeys send_modifier;
 
-static void send_key(int modifier, int keycode){
-    send_keycode = keycode;
-    send_modifier = modifier;
+static void send_key(HIDModifierKeys modifier, HIDKeys keycode){
+    send_keys = std::make_pair(modifier, keycode);
     hid_device_request_can_send_now_event(hid_cid);
 }
 
-static void send_report(int modifier, int keycode){
-    uint8_t report[] = { 0xa1, static_cast<uint8_t>(modifier), 0, 0, static_cast<uint8_t>(keycode), 0, 0, 0, 0, 0};
-    hid_device_send_interrupt_message(hid_cid, &report[0], sizeof(report));
+static void send_report(HIDModifierKeys modifier, HIDKeys keycode){
+    std::array<uint8_t, 10> report = {
+            0xa1,
+            static_cast<uint8_t>(modifier), 0, 0,
+            static_cast<uint8_t>(keycode[0]),
+            static_cast<uint8_t>(keycode[0]),
+            static_cast<uint8_t>(keycode[0]),
+            static_cast<uint8_t>(keycode[0]),
+            static_cast<uint8_t>(keycode[0]),
+            static_cast<uint8_t>(keycode[0])};
+    hid_device_send_interrupt_message(hid_cid, report.data(), report.size());
 }
 
-void bt_send_char(uint8_t mod,  uint8_t key) {
-    uint8_t modifier;
-    uint8_t keycode;
-    int found;
-
+void bt_send_char(HIDModifierKeys mod,  HIDKeys key) {
     switch (app_state){
         case APP_BOOTING:
         case APP_CONNECTING:
@@ -122,12 +126,7 @@ void bt_send_char(uint8_t mod,  uint8_t key) {
         case APP_CONNECTED:
             // send keyu
             //found = keycode_and_modifer_us_for_character(character, &keycode, &modifier);
-            keycode = key;
-            modifier = mod;
-            if (keycode != 0){
-                send_key(modifier, keycode);
-                return;
-            }
+            send_key(mod, key);
             break;
         case APP_NOT_CONNECTED:
             printf("Connecting to %s...\n", bd_addr_to_str(device_addr));
@@ -202,13 +201,12 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * pack
                             hid_cid = 0;
                             break;
                         case HID_SUBEVENT_CAN_SEND_NOW:
-                            if (send_keycode){
-                                send_report(send_modifier, send_keycode);
-                                send_keycode = 0;
-                                send_modifier = 0;
+                            if (send_keys){
+                                send_report(send_keys->first, send_keys->second);
+                                //send_keys = std::nullopt;
                                 hid_device_request_can_send_now_event(hid_cid);
                             } else {
-                                send_report(0, 0);
+                                send_report(HIDModifierKeys::None, {});
                             }
                             break;
                         default:

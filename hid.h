@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <array>
 #include "keys.h"
 
 typedef uint8_t HIDKeyCode;
@@ -19,6 +20,8 @@ enum class HIDModifierKeys : uint8_t {
     RAlt    = 0x40,
     RMeta   = 0x80
 };
+
+//uint8_t report[] = { 0xa1, static_cast<uint8_t>(modifier), 0, 0, static_cast<uint8_t>(keycode), 0, 0, 0, 0, 0};
 
 inline HIDModifierKeys operator | (HIDModifierKeys lhs, HIDModifierKeys rhs)
 {
